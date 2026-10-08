@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سامانه جامع مدیریت و هوش مصنوعی قراردادها</title>
+    <style>
+        @import url('https://v1.fontapi.ir/css/Vazirmatn');
+        
+        :root {
+            --primary-color: #1e3a8a;
+            --secondary-color: #3b82f6;
+            --bg-color: #f3f4f6;
+            --surface-color: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 { margin: 0; font-size: 1.5rem; }
+
+        .tabs {
+            display: flex;
+            background: var(--surface-color);
+            border-bottom: 2px solid var(--border-color);
+            padding: 0 2rem;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 1rem 1.5rem;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover { color: var(--primary-color); }
+        .tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+
+        .container {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* فرم ها */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            background: var(--surface-color);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .form-group { display: flex; flex-direction: column; position: relative; }
+        .form-group.full-width { grid-column: 1 / -1; }
+        
+        label { font-weight: bold; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        
+        input, textarea, select {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .actions { margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end; }
+
+        .btn {
+            padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-family: inherit;
+            font-weight: bold; cursor: pointer; transition: opacity 0.2s; display: flex; align-items: center; gap: 0.5rem;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--primary-color); color: var(--primary-color); }
+
+        /* استایل پس زمینه برای خروجی قرارداد در پنل */
+        .contract-preview-wrapper {
+            margin-top: 2rem;
+            background: #e5e7eb;
+            padding: 2rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th, td { padding: 1rem; text-align: right; border-bottom: 1px solid var(--border-color); }
+        th { background: var(--bg-color); font-weight: bold; }
+        tr:hover { background: #f9fafb; }
+
+        /* تب سوم */
+        .workspace { display: grid; grid-template-columns: 250px 1fr; gap: 2rem; height: calc(100vh - 250px); margin-top: 1rem;}
+        .sidebar { background: white; border-radius: 8px; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow-y: auto; }
+        .page-item { padding: 1rem; border: 1px solid var(--border-color); margin-bottom: 0.5rem; border-radius: 6px; cursor: pointer; text-align: center; background: var(--bg-color); transition: all 0.2s; }
+        .page-item:hover, .page-item.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+        .editor-area { background: white; border-radius: 8px; padding: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 1rem; }
+        .content-editable { flex-grow: 1; border: 1px solid var(--border-color); border-radius: 6px; padding: 1rem; overflow-y: auto; outline: none; background: #fafafa; line-height: 2;}
+        .ai-tools { display: flex; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color); align-items: center; }
+
+        /* جستجوی زنده نمونه ها */
+        .sample-search-container { position: relative; width: 100%; max-width: 400px; }
+        .sample-dropdown {
+            position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border-color);
+            border-radius: 6px; max-height: 200px; overflow-y: auto; z-index: 1000; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .sample-item { padding: 0.75rem; cursor: pointer; border-bottom: 1px solid #f3f4f6; }
+        .sample-item:hover { background: var(--bg-color); color: var(--primary-color); }
+
+        .loader-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center;
+            z-index: 9999; flex-direction: column; font-weight: bold; color: var(--primary-color);
+        }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* استایل پرینت کاملا منطبق با A4 */
+        @media print {
+            @page { size: A4; margin: 0; }
+            body { background: white; margin: 0; }
+            body * { visibility: hidden; }
+            #printable-area, #printable-area * { visibility: visible; }
+            #printable-area { position: absolute; left: 0; top: 0; width: 100%; }
+            .contract-preview-wrapper { background: white; padding: 0; margin: 0; border: none; overflow: visible; display: block; box-shadow: none;}
+            .a4-container { box-shadow: none !important; border: none !important; width: 100% !important; margin: 0 !important; padding: 15mm !important; }
+            header, .tabs, .form-grid, .actions, .workspace, .sample-tools { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="loader-overlay" id="loader">
+        <div class="spinner"></div>
+        <div id="loader-text">در حال پردازش...</div>
+    </div>
+
+    <header>
+        <h1>سامانه مدیریت حقوقی و قراردادهای هوشمند</h1>
+        <div style="font-size: 0.9rem;">تاریخ سیستم: ۱۴۰۵/۰۴/۰۲</div>
+    </header>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('tab-generate')">✍️ تنظیم قرارداد جدید</button>
+        <button class="tab-btn" onclick="switchTab('tab-manage'); loadContracts();">📂 آرشیو و مدیریت</button>
+        <button class="tab-btn" onclick="switchTab('tab-analyze'); loadSampleFiles();">🔍 تحلیل و قراردادهای نمونه</button>
+    </div>
+
+    <div class="container">
+        <!-- تب اول: تنظیم قرارداد -->
+        <div id="tab-generate" class="tab-content active">
+            <div class="form-grid" id="contractForm">
+                <input type="hidden" id="c_id">
+                <input type="hidden" id="c_ref_number">
+                <div class="form-group">
+                    <label>نوع قرارداد</label>
+                    <select id="c_type">
+                        <option value="استخدام">استخدام / کار موقت</option>
+                        <option value="پیمانکاری">پیمانکاری / مشارکت در ساخت</option>
+                        <option value="خرید و فروش">خرید و فروش</option>
+                        <option value="اجاره نامه">اجاره نامه</option>
+                        <option value="صلح نامه">صلح نامه / توافق نامه</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>موضوع قرارداد</label>
+                    <input type="text" id="c_subject" placeholder="مثال: طراحی نرم افزار...">
+                </div>
+                <div class="form-group full-width">
+                    <label>مشخصات کامل طرف اول (کارفرما/فروشنده)</label>
+                    <textarea id="c_partyA" rows="2"></textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label>مشخصات کامل طرف دوم (پیمانکار/خریدار)</label>
+                    <textarea id="c_partyB" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>مبلغ کل و نحوه پرداخت</label>
+                    <input type="text" id="c_amount" placeholder="...">
+                </div>
+                <div class="form-group">
+                    <label>مدت زمان قرارداد</label>
+                    <input type="text" id="c_duration" placeholder="...">
+                </div>
+                <div class="form-group full-width">
+                    <label>تعهدات طرف اول</label>
+                    <textarea id="c_obligationsA" rows="2"></textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label>تعهدات طرف دوم</label>
+                    <textarea id="c_obligationsB" rows="2"></textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label>شروط و تبصره‌های پیشنهادی</label>
+                    <textarea id="c_clauses" rows="2"></textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label>نکات خاص (برای هوش مصنوعی)</label>
+                    <textarea id="c_specialNotes" rows="2"></textarea>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-primary" onclick="generateContract()">✨ تولید نسخه اینترپرایز قرارداد</button>
+                <button class="btn btn-success" onclick="saveContract()">💾 ذخیره در سیستم</button>
+                <button class="btn btn-outline" onclick="window.print()">🖨️ چاپ با فرمت A4</button>
+            </div>
+
+            <div class="contract-preview-wrapper" id="printable-area">
+                <div id="contract-output" style="text-align: center; color: var(--text-muted); align-self: center; width: 100%;">
+                    پیش‌نمایش قرارداد با قالب استاندارد اداری در اینجا نمایش داده خواهد شد...
+                </div>
+            </div>
+        </div>
+
+        <!-- تب دوم: مدیریت قراردادها -->
+        <div id="tab-manage" class="tab-content">
+            <input type="text" class="search-box" id="searchInput" style="width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 1rem;" placeholder="جستجوی زنده در تمامی قراردادها..." onkeyup="filterTable()">
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>شماره مرجع</th>
+                        <th>موضوع قرارداد</th>
+                        <th>طرف اول</th>
+                        <th>طرف دوم</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody id="contractsTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- تب سوم: تحلیل و آپلود -->
+        <div id="tab-analyze" class="tab-content">
+            <div class="sample-tools" style="display: flex; gap: 2rem; align-items: flex-end; background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                
+                <!-- بخش آپلود مستقیم -->
+                <div style="flex: 1;">
+                    <label>آپلود فایل شما (PDF, DOCX):</label>
+                    <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                        <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.html" style="padding: 0.5rem;">
+                        <button class="btn btn-success" onclick="uploadFile()">بارگذاری</button>
+                    </div>
+                </div>
+
+                <div style="width: 2px; background: var(--border-color); height: 50px;"></div>
+
+                <!-- بخش جستجوی قرارداد نمونه -->
+                <div style="flex: 1; display: flex; flex-direction: column;">
+                    <label>انتخاب از قراردادهای نمونه سیستم:</label>
+                    <div class="sample-search-container" style="margin-top: 0.5rem; width: 100%;">
+                        <input type="text" id="sampleSearchInput" placeholder="نام قرارداد (مثلا: اجاره منزل)..." onkeyup="filterSamples()" onfocus="showSamples()" autocomplete="off">
+                        <div class="sample-dropdown" id="sampleDropdown"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="workspace">
+                <div class="sidebar" id="pageList">
+                    <div style="text-align: center; color: gray;">سندی انتخاب نشده</div>
+                </div>
+                <div class="editor-area">
+                    <div class="content-editable" id="docEditor" contenteditable="true">
+                        محتوا اینجا نمایش داده می شود...
+                    </div>
+                    
+                    <div class="ai-tools">
+                        <button class="btn btn-outline" onclick="analyzeDoc('analyze')">📊 تحلیل ریسک‌ها</button>
+                        <button class="btn btn-outline" onclick="analyzeDoc('fix')">🛠️ اصلاح حقوقی</button>
+                        <input type="text" id="customPrompt" placeholder="دستور خاص..." style="flex-grow: 1;">
+                        <button class="btn btn-primary" onclick="analyzeDoc('custom')">🚀 اعمال جادو</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        function showLoader(text = "در حال پردازش...") {
+            document.getElementById('loader-text').innerText = text;
+            document.getElementById('loader').style.display = 'flex';
+        }
+        function hideLoader() { document.getElementById('loader').style.display = 'none'; }
+
+        // --- تب اول ---
+        let currentGeneratedHTML = "";
+
+        async function generateContract() {
+            const data = {
+                contractType: document.getElementById('c_type').value,
+                subject: document.getElementById('c_subject').value,
+                partyA: document.getElementById('c_partyA').value,
+                partyB: document.getElementById('c_partyB').value,
+                amount: document.getElementById('c_amount').value,
+                duration: document.getElementById('c_duration').value,
+                obligationsA: document.getElementById('c_obligationsA').value,
+                obligationsB: document.getElementById('c_obligationsB').value,
+                clauses: document.getElementById('c_clauses').value,
+                specialNotes: document.getElementById('c_specialNotes').value
+            };
+
+            showLoader("در حال تولید قرارداد با قالب سازمانی و هوش مصنوعی...");
+            try {
+                const res = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                currentGeneratedHTML = result.html;
+                document.getElementById('c_ref_number').value = result.ref_number;
+                document.getElementById('contract-output').innerHTML = currentGeneratedHTML;
+            } catch (err) { alert("خطا در تولید!"); }
+            hideLoader();
+        }
+
+        async function saveContract() {
+            if(!currentGeneratedHTML) { alert("اول قرارداد رو تولید کن!"); return; }
+            
+            const data = {
+                id: document.getElementById('c_id').value,
+                ref_number: document.getElementById('c_ref_number').value,
+                subject: document.getElementById('c_subject').value,
+                partyA: document.getElementById('c_partyA').value,
+                partyB: document.getElementById('c_partyB').value,
+                html: currentGeneratedHTML
+            };
+
+            showLoader("در حال ذخیره...");
+            try {
+                const res = await fetch('/api/contracts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                document.getElementById('c_id').value = result.id;
+                alert("قرارداد با موفقیت ذخیره شد!");
+            } catch (err) { alert("خطا در ذخیره سازی!"); }
+            hideLoader();
+        }
+
+        // --- تب دوم ---
+        let allContracts = [];
+
+        async function loadContracts() {
+            showLoader();
+            try {
+                const res = await fetch('/api/contracts');
+                allContracts = await res.json();
+                renderTable(allContracts);
+            } catch(err) { console.error(err); }
+            hideLoader();
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('contractsTableBody');
+            tbody.innerHTML = '';
+            data.forEach(c => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td dir="ltr" style="text-align: right; color: var(--primary-color); font-weight: bold;">${c.ref_number || 'N/A'}</td>
+                    <td>${c.title || '---'}</td>
+                    <td>${c.party_a || '---'}</td>
+                    <td>${c.party_b || '---'}</td>
+                    <td>
+                        <button class="btn btn-outline" style="padding: 0.3rem 0.5rem; display: inline-block;" onclick="editContract('${c.id}')">✏️ نمایش</button>
+                        <button class="btn btn-danger" style="padding: 0.3rem 0.5rem; display: inline-block;" onclick="deleteContract('${c.id}')">🗑️ حذف</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterTable() {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allContracts.filter(c => 
+                (c.title && c.title.toLowerCase().includes(term)) || 
+                (c.party_a && c.party_a.toLowerCase().includes(term)) ||
+                (c.ref_number && c.ref_number.toLowerCase().includes(term))
+            );
+            renderTable(filtered);
+        }
+
+        function editContract(id) {
+            const contract = allContracts.find(c => c.id === id);
+            if(contract) {
+                document.getElementById('c_id').value = contract.id;
+                document.getElementById('c_ref_number').value = contract.ref_number;
+                document.getElementById('c_subject').value = contract.title || '';
+                document.getElementById('c_partyA').value = contract.party_a || '';
+                document.getElementById('c_partyB').value = contract.party_b || '';
+                currentGeneratedHTML = contract.content;
+                document.getElementById('contract-output').innerHTML = currentGeneratedHTML;
+                document.querySelector('.tab-btn').click(); 
+            }
+        }
+
+        async function deleteContract(id) {
+            if(!confirm("حذف شود؟")) return;
+            showLoader();
+            await fetch(`/api/contracts/${id}`, { method: 'DELETE' });
+            hideLoader();
+            loadContracts();
+        }
+
+        // --- تب سوم: آپلود و نمونه ها ---
+        let currentPages = [];
+        let activePageIndex = 0;
+        let sampleFilesList = [];
+
+        // بارگذاری لیست فایل های نمونه
+        async function loadSampleFiles() {
+            try {
+                const res = await fetch('/api/samples');
+                sampleFilesList = await res.json();
+                renderSamplesDropdown(sampleFilesList);
+            } catch(e) { console.error("Error loading samples"); }
+        }
+
+        function renderSamplesDropdown(list) {
+            const dropdown = document.getElementById('sampleDropdown');
+            dropdown.innerHTML = '';
+            list.forEach(file => {
+                const div = document.createElement('div');
+                div.className = 'sample-item';
+                div.innerText = file;
+                div.onclick = () => {
+                    document.getElementById('sampleSearchInput').value = file;
+                    dropdown.style.display = 'none';
+                    fetchSampleContent(file);
+                };
+                dropdown.appendChild(div);
+            });
+        }
+
+        function filterSamples() {
+            const term = document.getElementById('sampleSearchInput').value.toLowerCase();
+            const filtered = sampleFilesList.filter(f => f.toLowerCase().includes(term));
+            renderSamplesDropdown(filtered);
+            document.getElementById('sampleDropdown').style.display = filtered.length ? 'block' : 'none';
+        }
+
+        function showSamples() {
+            if(sampleFilesList.length > 0) {
+                document.getElementById('sampleDropdown').style.display = 'block';
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            if(!e.target.closest('.sample-search-container')) {
+                document.getElementById('sampleDropdown').style.display = 'none';
+            }
+        });
+
+        // دریافت محتوای فایل نمونه از سرور
+        async function fetchSampleContent(filename) {
+            showLoader("در حال بارگذاری نمونه قرارداد...");
+            try {
+                const res = await fetch(`/api/samples/${filename}`);
+                const result = await res.json();
+                if(result.error) throw new Error(result.error);
+                currentPages = result.pages;
+                renderPageList();
+                if(currentPages.length > 0) selectPage(0);
+            } catch(err) { alert("خطا: " + err.message); }
+            hideLoader();
+        }
+
+        // آپلود فایل شخصی
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            if(!fileInput.files[0]) { alert("فایلی انتخاب نشده"); return; }
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            showLoader("در حال استخراج صفحات...");
+            try {
+                const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                const result = await res.json();
+                if(result.error) throw new Error(result.error);
+                currentPages = result.pages;
+                renderPageList();
+                if(currentPages.length > 0) selectPage(0);
+            } catch(err) { alert("خطا: " + err.message); }
+            hideLoader();
+        }
+
+        function renderPageList() {
+            const list = document.getElementById('pageList');
+            list.innerHTML = '';
+            currentPages.forEach((p, index) => {
+                const div = document.createElement('div');
+                div.className = 'page-item';
+                div.innerText = `صفحه ${p.page_num}`;
+                div.onclick = () => selectPage(index);
+                list.appendChild(div);
+            });
+        }
+
+        function selectPage(index) {
+            activePageIndex = index;
+            document.querySelectorAll('.page-item').forEach((el, i) => {
+                if(i === index) el.classList.add('active');
+                else el.classList.remove('active');
+            });
+            document.getElementById('docEditor').innerHTML = currentPages[index].content.replace(/\n/g, '<br>');
+        }
+
+        async function analyzeDoc(action) {
+            const content = document.getElementById('docEditor').innerText;
+            if(!content.trim()) return;
+            const customPrompt = document.getElementById('customPrompt').value;
+            showLoader("هوش مصنوعی مشغول کار است...");
+            try {
+                const res = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content, action, customPrompt })
+                });
+                const result = await res.json();
+                document.getElementById('docEditor').innerHTML = result.html;
+            } catch(err) { alert("خطا در پردازش!"); }
+            hideLoader();
+        }
+
+    </script>
+</body>
+</html>
